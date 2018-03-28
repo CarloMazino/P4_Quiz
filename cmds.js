@@ -40,24 +40,24 @@ const validateId = id => {
  * Muestra la ayuda.
  * @param rl Objeto readLine usado para implementar el CLI
  */
-exports.helpCmd = rl => {
-    log("Comandos:");
-    log(" h|help - Muestra esta ayuda.");
-    log(" list - Listear los quizzes existentes.");
-    log(" show <id> - muestra la pregunta y la respuesta.");
-    log(" add - Añadir un nuevo quizz.");
-    log(" delete <id> - Borrar el quizz indicado.");
-    log(" edit <id> - Editar el quizz indicado.");
-    log(" test <id> - Probar el quizz indicado.");
-    log(" p|play - Jugar a preguntar aleatoriamente todos los quizzes.");
-    log(" credits - Créditos.");
-    log(" q|quit - Salir del programa.");
+exports.helpCmd = (socket,rl) => {
+    log(socket,"Comandos:");
+    log(socket," h|help - Muestra esta ayuda.");
+    log(socket," list - Listear los quizzes existentes.");
+    log(socket," show <id> - muestra la pregunta y la respuesta.");
+    log(socket," add - Añadir un nuevo quizz.");
+    log(socket," delete <id> - Borrar el quizz indicado.");
+    log(socket," edit <id> - Editar el quizz indicado.");
+    log(socket," test <id> - Probar el quizz indicado.");
+    log(socket," p|play - Jugar a preguntar aleatoriamente todos los quizzes.");
+    log(socket," credits - Créditos.");
+    log(socket," q|quit - Salir del programa.");
     rl.prompt();
 };
 /**
  * Lista todos los quizzes existentes en el modelo.
  */
-exports.listCmd = rl => {
+exports.listCmd = (socket,rl) => {
     /*
     model.getAll().forEach(((quiz,id) => { 
         log(`[${colorize(id,'magenta')}]:${quiz.question}`);
@@ -67,10 +67,10 @@ exports.listCmd = rl => {
 
     models.quiz.findAll()
 	.each(quiz => {
-			log(` [${colorize(quiz.id, 'magenta')}]:  ${quiz.question}`);
+			log(socket,` [${colorize(quiz.id, 'magenta')}]:  ${quiz.question}`);
 	})
 	.catch(error => {
-		errorlog(error.message);
+		errorlog(socket,error.message);
 	})
 	.then(() => {
 		rl.prompt();
@@ -80,7 +80,7 @@ exports.listCmd = rl => {
  * Muestra el quiz indicado en el parámetro: la pregunta y la respuesta.
  * @param id clave del quiz a mostrar.
  */
-exports.showCmd = (rl, id) => {
+exports.showCmd = (socket, rl, id) => {
     /*if (typeof id === "undefined"){
         errorlog(`Falta el parámetro id.`);
     }else{
@@ -100,10 +100,10 @@ exports.showCmd = (rl, id) => {
 		if (!quiz) {
 			throw new Error(`No existe un quiz asociado al id=${id}.`);
 		}
-		log(` [${colorize(quiz.id, 'magenta')}]: ${quiz.question} ${colorize('=>', 'magenta')} ${quiz.answer}`);
+		log(socket,` [${colorize(quiz.id, 'magenta')}]: ${quiz.question} ${colorize('=>', 'magenta')} ${quiz.answer}`);
 	})
 	.catch(error => {
-		errorlog(error.message);
+		errorlog(socket,error.message);
 	})
 	.then(() => {
 		rl.prompt();
@@ -113,7 +113,7 @@ exports.showCmd = (rl, id) => {
  * Añade un nuevo quiz al modelo.
  * @param id Clave del quiz a mostrar.
  */
-exports.addCmd = rl => {
+exports.addCmd = (socket,rl) => {
     /*
     rl.question(colorize('Introduzca una pregunta: ', 'red'), question =>{
         rl.question(colorize('Introduzca la respuesta ','red'), answer => {
@@ -138,14 +138,14 @@ exports.addCmd = rl => {
        return models.quiz.create(quiz);
    })
    .then((quiz) => {
-       log(` ${colorize('Se ha añadido','magenta')}: ${quiz.question} ${colorize('=>','magenta')} ${quiz.answer}`);
+       log(socket,` ${colorize('Se ha añadido','magenta')}: ${quiz.question} ${colorize('=>','magenta')} ${quiz.answer}`);
    })
    .catch(Sequelize.ValidationError, error => {
-       errorlog('El quiz es erroneo:');
-       error.errors.forEach((message) => {errorlog(message)});
+       errorlog(socket,'El quiz es erroneo:');
+       error.errors.forEach((message) => {errorlog(socket,message)});
    })
    .catch(error => {
-       errorlog(error.message);
+       errorlog(socket,error.message);
    })
    .then(() => {
        rl.prompt();
@@ -155,7 +155,7 @@ exports.addCmd = rl => {
  * Prueba el quizz, es decir, hace una pregunta del modelo a la que debemos contestar.
  * @param id clave del quiz a probar.
  */
-exports.testCmd = (rl, id) => {
+exports.testCmd = (socket, rl, id) => {
 
     validateId(id)
     .then(id => models.quiz.findById(id))
@@ -166,11 +166,11 @@ exports.testCmd = (rl, id) => {
             return makeQuestion(rl, quiz.question)
             .then(answer =>{
                 if (answer.toLowerCase().trim() === quiz.answer.toLowerCase().trim()){
-                    biglog(`CORRECTO`,'green');
+                    biglog(socket,`CORRECTO`,'green');
                     rl.prompt();
                     return;
                 }else{
-                    log(`INCORRECTO`,'red');
+                    log(socket,`INCORRECTO`,'red');
                     rl.prompt();
                     return;
                 }
@@ -178,7 +178,7 @@ exports.testCmd = (rl, id) => {
         }
     })
     .catch(error => {
-		errorlog(error.message);
+		errorlog(socket,error.message);
 	})
 
 
@@ -219,7 +219,7 @@ exports.testCmd = (rl, id) => {
  * Borra un quizz del modelo.
  * @param id Clave del quiz a borrar en el modelo.
  */
-exports.deleteCmd = (rl, id) => {
+exports.deleteCmd = (socket, rl, id) => {
     /*
     if (typeof id === "undefined"){
         errorlog(`Falta el parámetro id.`);
@@ -236,7 +236,7 @@ exports.deleteCmd = (rl, id) => {
     validateId(id)
 	.then(id => models.quiz.destroy({where: {id}}))
 	.catch(error => {
-		errorlog(error.message);
+		errorlog(socket,error.message);
 	})
 	.then(() => {
 		rl.prompt();
@@ -246,7 +246,7 @@ exports.deleteCmd = (rl, id) => {
  * Edita un quiz del modelo.
  * @param id Clave del quiz a editar en el modelo.
  */
-exports.editCmd = (rl,id) => {
+exports.editCmd = (socket,rl,id) => {
     /*
     if (typeof id === "undefined"){
         errorlog(`Falta el parámetro id.`);
@@ -297,14 +297,14 @@ exports.editCmd = (rl,id) => {
        return quiz.save();
    })
    .then(quiz => {
-       log(`Se ha cambiado el quiz ${colorize(id,'magenta')} por: ${quiz.question} ${colorize('=>','magenta')} ${quiz.answer}`);
+       log(socket,`Se ha cambiado el quiz ${colorize(id,'magenta')} por: ${quiz.question} ${colorize('=>','magenta')} ${quiz.answer}`);
    })
    .catch(Sequelize.ValidationError, error => {
-       errorlog('El quiz es erroneo:');
-       error.errors.forEach((message) => {errorlog(message)});
+       errorlog(socket,'El quiz es erroneo:');
+       error.errors.forEach((message) => {errorlog(socket,message)});
    })
    .catch(error => {
-       errorlog(error.message);
+       errorlog(socket,error.message);
    })
    .then(() => {
        rl.prompt();
@@ -315,7 +315,7 @@ exports.editCmd = (rl,id) => {
  * Pregunta todos los quizzes existentes en el modleo en orden alfabético.
  * Se gana si contesta a todos satisfactoriamente.
  */
-exports.playCmd = rl => {
+exports.playCmd = (socket,rl) => {
     /*let score=0;
     let toBeSolved = [];
     let quizzes=model.getAll();
@@ -361,8 +361,8 @@ exports.playCmd = rl => {
         return new Sequelize.Promise( (result, reject)=>{
 
             if (toBePlayed.length<=0){
-                log("Test finalizado. Puntuación:",'green');
-                biglog(`${score}`,'green');
+                log(socket,"Test finalizado. Puntuación:",'green');
+                biglog(socket,`${score}`,'green');
                 rl.prompt();
                 result();
                 return;
@@ -376,11 +376,11 @@ exports.playCmd = rl => {
             .then(answer =>{
                 if (answer.toLowerCase().trim() === quiz.answer.toLowerCase().trim()){
                     score++;
-                    log(`CORRECTO - lleva ${score} aciertos`);
+                    log(socket,`CORRECTO - lleva ${score} aciertos`);
                     return playOne();
                 }else{
-                    log(`INCORRECTO\n Fin del examen. Aciertos:`);
-                    biglog(`${score}`,'magenta');
+                    log(socket,`INCORRECTO\n Fin del examen. Aciertos:`);
+                    biglog(socket,`${score}`,'magenta');
                     rl.prompt();
                     result();
                     return;
@@ -398,10 +398,10 @@ exports.playCmd = rl => {
         return playOne();
     })
     .catch(err => {
-        errorlog("Error: "+err);
+        errorlog(socket,"Error: "+err);
     })
     .then(() => {
-        biglog(score);
+        biglog(socket,score);
         rl.prompt();
     })
 };
@@ -409,19 +409,19 @@ exports.playCmd = rl => {
  * Muestra los nombres de los autores de la práctica.
  *
  */
-exports.creditsCmd = rl => {
-    log('Autores de la práctica:');
-    log("\n Marta Hernández Muela\n&\n Carlos Caro Álvarez",'green');
+exports.creditsCmd = (socket,rl) => {
+    log(socket,'Autores de la práctica:');
+    log(socket,"\n Marta Hernández Muela\n&\n Carlos Caro Álvarez",'green');
     rl.prompt();
 };
 /**
  * Termina el programa.
  *
  */
-exports.quitCmd = rl => {
-    log("¡Adiós!",'blue');
+exports.quitCmd = (socket,rl) => {
+    //log(socket,"¡Adiós!",'blue');
     rl.close();
-
+    socket.end();
 };
 /**
  * Mensaje por defecto cuando se da una orden desconocida.
@@ -436,13 +436,13 @@ exports.quitCmd = rl => {
  * Mensaje por defecto si eres tentado por el Lado Oscuro de la Fuerza
  *
  */
-exports.senateCmd = rl => {
+exports.senateCmd = (socket,rl) => {
     rl.question(colorize('Have you ever heard the tragedy of Darth Plagueis the Wise?\n','white'), answer=>{
         if (answer==="yes"||answer==="y"||answer==="Yes"||answer==="y"){
-            log (`Ah! I see you are a man of culture as well.`,'white');
+            log (socket,`Ah! I see you are a man of culture as well.`,'white');
             rl.prompt();
         }else{
-            log("I thought not. It's not a story the Jedi would tell you. It's a Sith legend. Darth Plagueis was a Dark Lord of the Sith, so powerful and so wise he could use the Force to influence the midichlorians to create life... He had such a knowledge of the dark side that he could even keep the ones he cared about from dying. The dark side of the Force is a pathway to many abilities some consider to be unnatural. He became so powerful... the only thing he was afraid of was losing his power, which eventually, of course, he did. Unfortunately, he taught his apprentice everything he knew, then his apprentice killed him in his sleep. It's ironic; he could save others from death, but not himself.",'red');
+            log(socket,"I thought not. It's not a story the Jedi would tell you. It's a Sith legend. Darth Plagueis was a Dark Lord of the Sith, so powerful and so wise he could use the Force to influence the midichlorians to create life... He had such a knowledge of the dark side that he could even keep the ones he cared about from dying. The dark side of the Force is a pathway to many abilities some consider to be unnatural. He became so powerful... the only thing he was afraid of was losing his power, which eventually, of course, he did. Unfortunately, he taught his apprentice everything he knew, then his apprentice killed him in his sleep. It's ironic; he could save others from death, but not himself.",'red');
             rl.prompt();
     }
     });
